@@ -1,0 +1,62 @@
+---
+import settings from '../data/settings.json';
+import hero from '../data/hero.json';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+function image(path: unknown) {
+  if (!path) return '';
+  if (typeof path !== 'string' || !/^\/images\/[\w./-]+\.(jpg|jpeg|png|webp)$/i.test(path) || path.includes('..')) throw new Error('Đường dẫn ảnh không hợp lệ');
+  if (!existsSync(resolve('public', '.' + path))) throw new Error(`Không tìm thấy ảnh: ${path}`);
+  return base + path;
+}
+const desktop = image(hero.desktopImage);
+const mobile = image(hero.mobileImage);
+const logo = image(settings.logo);
+if (!/^0\d{9}$/.test(settings.primaryPhone)) throw new Error('Điện thoại chính phải gồm 10 chữ số và bắt đầu bằng 0');
+if ((desktop || mobile) && !hero.imageAlt.trim()) throw new Error('Cần mô tả ảnh đầu trang');
+const modules = import.meta.glob('../data/gallery/*.json', { eager: true, import: 'default' });
+const gallery = Object.values(modules).map((entry: any) => {
+  if (!entry.title || !entry.alt) throw new Error('Ảnh thư viện cần tên và mô tả');
+  return { ...entry, url: image(entry.image) };
+}).filter(entry => entry.visible && entry.url).sort((a,b) => (a.order || 0) - (b.order || 0));
+---
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Thảo Hoàng — Bản thử quản trị ảnh</title>
+  </head>
+  <body>
+    <aside class="notice">BẢN THỬ NGHIỆM · Chưa phải website chính thức</aside>
+    <header>
+      <a class="brand" href="#home">{logo ? <img src={logo} alt={settings.brandName} width="170" height="64" /> : settings.shortName}</a>
+      <a class="contact" href={`tel:${settings.primaryPhone}`}>Liên hệ · {settings.primaryPhone}</a>
+    </header>
+    <main id="home">
+      <section class:list={['hero', { 'has-image': desktop || mobile }]}>
+        {desktop || mobile ? <picture>
+          {mobile && <source media="(max-width: 640px)" srcset={mobile} />}
+          <img src={desktop || mobile} alt={hero.imageAlt} style={{objectPosition: /^\d{1,3}% \d{1,3}%$/.test(hero.focalPoint) ? hero.focalPoint : '50% 50%'}} width="1600" height="1100" fetchpriority="high" />
+        </picture> : <div class="empty-image">Vị trí ảnh chụp thật · Chờ tải ảnh qua CMS</div>}
+        <div class="hero-copy">
+          <p class="eyebrow">DỊCH VỤ TIỆC CƯỚI THẢO HOÀNG</p>
+          <h1>{hero.heading}</h1>
+          <div class="actions"><a href={`tel:${settings.primaryPhone}`}>Liên hệ tư vấn ↗</a><a href="#gallery">Xem thư viện ảnh ↓</a></div>
+        </div>
+      </section>
+      <section id="gallery" class="gallery">
+        <p class="eyebrow">PAGES CMS · KIỂM TRA THAY ẢNH</p>
+        <h2>Những khung hình được chọn</h2>
+        {gallery.length ? <div class="grid">{gallery.map(entry => <figure><img src={entry.url} alt={entry.alt} width="800" height="1000" loading="lazy" /><figcaption>{entry.title}</figcaption></figure>)}</div> : <p>Chưa có ảnh. Thêm ảnh chụp thật qua mục Thư viện ảnh thử nghiệm trong CMS.</p>}
+      </section>
+    </main>
+    <footer>{settings.shortName} · {settings.slogan}</footer>
+  </body>
+</html>
+<style>
+  :root{--ivory:#faf9f6;--cream:#f3eee6;--champagne:#c5a878;--charcoal:#292824;--muted:#77736e;font-family:Arial,sans-serif;color:var(--charcoal);background:var(--ivory)}
+  *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0}a{color:inherit;text-decoration:none}a:focus-visible{outline:3px solid #8a6429;outline-offset:6px}.notice{text-align:center;background:var(--charcoal);color:white;padding:10px;font-size:11px;letter-spacing:.12em}header{height:88px;padding:0 4vw;display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{font-family:Georgia,serif;font-size:24px;letter-spacing:.12em}.brand img{object-fit:contain;display:block}.contact{font-size:13px}.hero{min-height:78svh;position:relative;display:flex;align-items:center;background:var(--cream);padding:80px 8vw;isolation:isolate}.hero picture{position:absolute;inset:0;z-index:-2}.hero picture img{width:100%;height:100%;object-fit:cover}.has-image:after{content:'';position:absolute;inset:0;background:#0007;z-index:-1}.has-image{color:white}.empty-image{position:absolute;right:5%;top:35px;color:#6c6254;font-size:12px;border-bottom:1px solid var(--champagne);padding-bottom:10px}.hero-copy{max-width:780px}.eyebrow{font-size:11px;letter-spacing:.22em;line-height:1.8}h1{font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:clamp(46px,6.4vw,96px);line-height:1.12;letter-spacing:-.04em;margin:28px 0 40px}h2{font-family:Georgia,serif;font-weight:400;font-size:clamp(32px,4vw,52px)}.actions{display:flex;gap:30px;flex-wrap:wrap}.actions a{padding:15px 0;border-bottom:1px solid var(--champagne);font-size:14px}.gallery{max-width:1280px;margin:auto;padding:90px 32px}.gallery>p:last-child{line-height:1.7;color:#615b52}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}figure{margin:0}.grid img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover}figcaption{padding:16px 0}footer{border-top:1px solid #ddd2c3;padding:30px 4vw;font-size:13px}@media(max-width:640px){header{height:auto;min-height:80px;padding:20px;flex-wrap:wrap}.brand{font-size:20px}.contact{font-size:12px}.hero{padding:100px 20px 65px;min-height:75svh}.empty-image{left:20px;right:auto;top:25px;font-size:11px}.gallery{padding:64px 20px}.grid{grid-template-columns:1fr}.notice{line-height:1.6}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>

@@ -1,0 +1,43 @@
+media:
+  input: public/images
+  output: /images
+  extensions: [jpg, jpeg, png, webp]
+  rename: random
+content:
+  - name: settings
+    label: Thông tin liên hệ (bản thử nghiệm)
+    type: file
+    path: src/data/settings.json
+    format: json
+    fields:
+      - {name: brandName, label: Tên doanh nghiệp, type: string, required: true}
+      - {name: shortName, label: Tên ngắn, type: string, required: true}
+      - {name: slogan, label: Slogan, type: string, required: true}
+      - {name: primaryPhone, label: Điện thoại chính, type: string, required: true}
+      - {name: secondaryPhone, label: Điện thoại phụ, type: string}
+      - {name: zaloPhone, label: Số Zalo, type: string}
+      - {name: logo, label: Logo gốc, type: image}
+  - name: hero
+    label: Ảnh đầu trang
+    type: file
+    path: src/data/hero.json
+    format: json
+    fields:
+      - {name: heading, label: Tiêu đề, type: string, required: true}
+      - {name: desktopImage, label: Ảnh máy tính, type: image}
+      - {name: mobileImage, label: Ảnh điện thoại, type: image}
+      - {name: imageAlt, label: Mô tả ảnh, type: string}
+      - {name: focalPoint, label: Điểm lấy nét (ví dụ 50% 50%), type: string}
+  - name: gallery
+    label: Thư viện ảnh thử nghiệm
+    type: collection
+    path: src/data/gallery
+    format: json
+    filename: '{primary}.json'
+    exclude: [.gitkeep]
+    fields:
+      - {name: title, label: Tên ảnh, type: string, required: true}
+      - {name: image, label: Ảnh, type: image, required: true}
+      - {name: alt, label: Mô tả ảnh, type: string, required: true}
+      - {name: visible, label: Hiển thị trong bản thử, type: boolean, default: false}
+      - {name: order, label: Thứ tự, type: number, default: 0}
