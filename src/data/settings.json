@@ -5,10 +5,9 @@
   "primaryPhone": "0975380083",
   "secondaryPhone": "0976082807",
   "zaloPhone": "0975380083",
-  "logo": "",
-  "messengerUrl": "",
-  "mapUrl": "https://maps.app.goo.gl/HCTpW4cV6E8zNieh7",
-  "address": "Ấp Lộc Tâm, Lộc Tấn, Bình Phước, Việt Nam",
+  "logo": "/images/mwatkng3-p1av4vez.jpg",
   "facebookUrl": "https://www.facebook.com/huy.hoanggia.9619934",
-  "serviceArea": "Lộc Ninh và các khu vực lân cận"
+  "serviceArea": "Lộc Ninh và các khu vực lân cận",
+  "address": "Ấp Lộc Tâm, Lộc Tấn, Bình Phước, Việt Nam",
+  "mapUrl": "https://maps.app.goo.gl/HCTpW4cV6E8zNieh7"
 }
