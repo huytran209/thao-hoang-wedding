@@ -1,56 +1,76 @@
 ---
 import settings from '../data/settings.json';
 import hero from '../data/hero.json';
-import content from '../data/content.json';
+import rawContent from '../data/content.json';
+import seo from '../data/seo.json';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import '../site.css';
 
-type GalleryEntry = { title: string; image: string; alt: string; visible?: boolean; order?: number };
-type Menu = { title: string; dishes?: string[] };
+type Ordered = { visible?: boolean; order?: number };
+type Media = { image?: string; alt?: string };
+type Gallery = Ordered & Media & { title: string; category?: string };
+type Content = {
+  introTitle: string; intro: string; introImage?: string; introAlt?: string;
+  services?: (Ordered & Media & { title: string; description: string })[];
+  menuIntro?: string; menus?: (Ordered & Media & { title: string; dishes?: string[] })[];
+  faq?: { question: string; answer: string }[];
+  testimonialsEnabled?: boolean; testimonials?: { name: string; quote: string; visible?: boolean }[];
+};
+const content: Content = rawContent;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 function image(path?: string) {
   if (!path) return '';
   if (!/^\/images\/(?:[\w-]+\/)*[\w.-]+\.(jpg|jpeg|png|webp)$/i.test(path) || !existsSync(resolve('public', '.' + path))) {
-    throw new Error(`Ảnh không hợp lệ hoặc không tìm thấy: ${path}`);
+    console.warn(`Bỏ qua ảnh thiếu hoặc không hợp lệ: ${path}`);
+    return '';
   }
   return base + path;
 }
-function phone(value?: string) {
-  if (!value) return '';
-  if (!/^0\d{9}$/.test(value)) throw new Error('Số liên hệ phải có 10 chữ số, bắt đầu bằng 0');
-  return value;
+function photo(path?: string, alt?: string) {
+  const url = image(path);
+  if (url && !alt?.trim()) console.warn(`Bỏ qua ảnh chưa có mô tả: ${path}`);
+  return alt?.trim() ? url : '';
 }
-function external(value: string | undefined, allowed: string[]) {
+function phone(value?: string) { return /^0\d{9}$/.test(value ?? '') ? value : undefined; }
+function external(value: string | undefined, hosts: string[]) {
   if (!value) return '';
-  const url = new URL(value);
-  if (url.protocol !== 'https:' || url.username || url.password || url.port || !allowed.includes(url.hostname)) {
-    throw new Error('Liên kết liên hệ cần dùng HTTPS và đúng tên miền dịch vụ');
-  }
-  return url.href;
+  try {
+    const url = new URL(value);
+    if (url.protocol === 'https:' && !url.username && !url.password && !url.port && hosts.includes(url.hostname)) return url.href;
+  } catch { /* Ignore malformed CMS links. */ }
+  console.warn('Bỏ qua liên kết liên hệ không hợp lệ');
+  return '';
 }
-const desktop = image(hero.desktopImage);
-const mobile = image(hero.mobileImage);
+function ordered<T extends Ordered>(items: T[] = [], defaultVisible = true) {
+  const rank = (item: Ordered) => typeof item.order === 'number' && Number.isFinite(item.order) ? item.order : 0;
+  return items.filter(item => item.visible ?? defaultVisible).sort((a, b) => rank(a) - rank(b));
+}
+const desktop = photo(hero.desktopImage, hero.imageAlt);
+const mobile = photo(hero.mobileImage, hero.imageAlt);
 const logo = image(settings.logo);
+const about = photo(content.introImage, content.introAlt);
 const mainPhone = phone(settings.primaryPhone);
 const secondary = phone(settings.secondaryPhone);
 const zalo = phone(settings.zaloPhone);
-const messenger = external(settings.messengerUrl, ['m.me', 'www.messenger.com', 'messenger.com']);
-const map = external(settings.mapUrl, ['maps.app.goo.gl', 'maps.google.com', 'www.google.com']);
-if (!mainPhone) throw new Error('Cần số điện thoại chính');
-if ((desktop || mobile) && !hero.imageAlt.trim()) throw new Error('Cần mô tả ảnh đầu trang');
+const facebook = external(settings.facebookUrl, ['www.facebook.com','facebook.com']);
+const messenger = external(settings.messengerUrl, ['m.me','www.messenger.com','messenger.com']);
+const map = external(settings.mapUrl, ['maps.app.goo.gl','maps.google.com','www.google.com']);
+if (!mainPhone) throw new Error('Cần số điện thoại chính hợp lệ');
 const focal = /^(?:100|\d{1,2})% (?:100|\d{1,2})%$/.test(hero.focalPoint) ? hero.focalPoint : '50% 50%';
-const gallery = Object.values(import.meta.glob<GalleryEntry>('../data/gallery/*.json', { eager: true, import: 'default' }))
-  .filter(entry => entry.visible)
-  .map(entry => {
-    if (!entry.title?.trim() || !entry.alt?.trim() || !entry.image) throw new Error('Ảnh hiển thị cần tên, file ảnh và mô tả');
-    return { ...entry, url: image(entry.image) };
-  })
-  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-const menus: Menu[] = content.menus ?? [];
-const links = [['gioi-thieu', 'Giới thiệu'], ['dich-vu', 'Dịch vụ'], ['thuc-don', 'Thực đơn'], ['thu-vien', 'Thư viện'], ['faq', 'Hỏi đáp']];
-const description = 'Dịch vụ Tiệc Cưới Thảo Hoàng. Tìm hiểu dịch vụ tiệc cưới, tiệc tại nhà, lễ đính hôn, trang trí và thực đơn.';
+const services = ordered(content.services).filter(item => item.title?.trim() && item.description?.trim()).map(item => ({...item, url: photo(item.image, item.alt)}));
+const menus = ordered(content.menus).map(item => ({ ...item, url: photo(item.image, item.alt), dishes: (item.dishes ?? []).filter(dish => dish.trim()) })).filter(item => item.title?.trim() && item.dishes.length);
+const gallery = ordered(Object.values(import.meta.glob<Gallery>('../data/gallery/*.json', { eager: true, import: 'default' })), false)
+  .map(item => ({...item, url: photo(item.image, item.alt), category: item.category?.trim() || 'Khác'}))
+  .filter(item => item.url && item.title?.trim());
+const categories = [...new Set(gallery.map(item => item.category))];
+const testimonials = content.testimonialsEnabled ? (content.testimonials ?? []).filter(item => item.visible && item.name?.trim() && item.quote?.trim()) : [];
+const faq = (content.faq ?? []).filter(item => item.question?.trim() && item.answer?.trim());
+const links = [['gioi-thieu','Giới thiệu'], ['dich-vu','Dịch vụ'], ...(menus.length ? [['thuc-don','Thực đơn']] : []), ['thu-vien','Thư viện'], ...(faq.length ? [['faq','Hỏi đáp']] : [])];
 const canonical = new URL(base + '/', Astro.site).href;
+const title = seo.title?.trim() || settings.brandName;
+const description = seo.description?.trim() || settings.slogan;
+const shareImage = image(seo.image) || desktop || mobile;
 ---
 <!doctype html>
 <html lang="vi">
@@ -62,83 +82,90 @@ const canonical = new URL(base + '/', Astro.site).href;
   <link rel="canonical" href={canonical} />
   <meta property="og:type" content="website" />
   <meta property="og:locale" content="vi_VN" />
-  <meta property="og:title" content={settings.brandName} />
+  <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:url" content={canonical} />
-  {(desktop || mobile) && <meta property="og:image" content={new URL(desktop || mobile, Astro.site).href} />}
-  <title>Dịch vụ Tiệc Cưới Thảo Hoàng</title>
+  {shareImage && <meta property="og:image" content={new URL(shareImage, Astro.site).href} />}
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" />
+  <title>{title}</title>
 </head>
 <body>
   <a class="skip" href="#noi-dung">Đến nội dung</a>
   <header class="shell top" id="dau-trang">
-    <a class="brand" href="#dau-trang">{logo ? <img src={logo} width="140" height="52" alt={settings.brandName} /> : <><span class="monogram" aria-hidden="true">TH</span><span>{settings.shortName}<small>DỊCH VỤ TIỆC CƯỚI</small></span></>}</a>
-    <nav aria-label="Điều hướng chính">{links.map(([id, label]) => <a href={`#${id}`}>{label}</a>)}</nav>
-    <a class="button outline" href="#lien-he">Liên hệ <span aria-hidden="true">↗</span></a>
+    <a class="brand" href="#dau-trang">{logo ? <img src={logo} width="140" height="52" alt={settings.brandName} /> : <>{settings.shortName}<small>DỊCH VỤ TIỆC CƯỚI</small></>}</a>
+    <nav class="desktop-nav" aria-label="Điều hướng chính">{links.map(([id,label]) => <a href={`#${id}`}>{label}</a>)}</nav>
+    <a class="button outline top-contact" href="#lien-he">Liên hệ <span aria-hidden="true">↗</span></a>
+    <details class="mobile-nav"><summary>Danh mục</summary><nav aria-label="Điều hướng điện thoại">{links.map(([id,label]) => <a href={`#${id}`}>{label}</a>)}<a href="#lien-he">Liên hệ</a></nav></details>
   </header>
   <main id="noi-dung" tabindex="-1">
     <section class="shell hero" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="eyebrow">DỊCH VỤ TIỆC CƯỚI THẢO HOÀNG</p>
-        <h1 id="hero-title">{hero.heading}</h1>
-        <p>{settings.slogan}</p>
-        <div class="actions"><a class="button solid" href="#lien-he">Tư vấn buổi tiệc <span aria-hidden="true">↗</span></a><a class="text-link" href="#dich-vu">Khám phá dịch vụ <span aria-hidden="true">↓</span></a></div>
+        <p class="eyebrow">Dịch vụ tiệc cưới · Lộc Ninh</p>
+        <h1 id="hero-title">{settings.shortName}</h1>
+        <p class="hero-slogan">{hero.heading || settings.slogan}</p>
+        <div class="actions"><a class="button solid" href="#lien-he">Tư vấn buổi tiệc <span aria-hidden="true">↗</span></a><a class="text-link" href="#dich-vu">Xem dịch vụ <span aria-hidden="true">↓</span></a></div>
       </div>
       <div class="hero-art">
-        {desktop || mobile ? <picture>
+        <div class="placeholder" aria-hidden="true"><span>01</span><span>Ảnh đầu trang</span></div>
+        {(desktop || mobile) && <picture>
           {mobile && <source media="(max-width: 700px)" srcset={mobile} />}
-          <img src={desktop || mobile} alt={hero.imageAlt} width="1200" height="1400" fetchpriority="high" style={{ objectPosition: focal }} />
-        </picture> : <div class="seal" aria-hidden="true"><span>TH</span><small>THẢO HOÀNG</small></div>}
+          <img src={desktop || mobile} alt={hero.imageAlt} width="1200" height="1400" fetchpriority="high" style={{objectPosition: focal}} />
+        </picture>}
       </div>
     </section>
-    <section class="section shell intro" id="gioi-thieu">
-      <div><p class="eyebrow">01 / GIỚI THIỆU</p><h2>{content.introTitle}</h2></div>
-      <p>{content.intro}</p>
+    <section class="section shell split" id="gioi-thieu">
+      <div><p class="eyebrow">01 / Giới thiệu</p><h2>{content.introTitle}</h2></div>
+      <div><p>{content.intro}</p>{about && <img class="editorial-image" src={about} alt={content.introAlt} width="800" height="600" loading="lazy" decoding="async" />}</div>
     </section>
     <div class="tinted">
       <section class="section shell" id="dich-vu">
-        <p class="eyebrow">02 / DỊCH VỤ</p><h2>Dịch vụ tiệc & trang trí</h2>
-        <div class="cards">{(content.services ?? []).map((service, index) => <article>
-          <span class="card-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+        <p class="eyebrow">02 / Dịch vụ</p><h2>Dịch vụ tiệc & trang trí</h2>
+        <div class="cards">{services.map((service,index) => <article>
+          {service.url && <img class="editorial-image" src={service.url} alt={service.alt} width="800" height="600" loading="lazy" decoding="async" />}
+          <span class="card-index" aria-hidden="true">{String(index + 1).padStart(2,'0')}</span>
           <h3>{service.title}</h3><p>{service.description}</p>
         </article>)}</div>
       </section>
     </div>
-    <section class="section shell intro" id="thuc-don">
-      <div><p class="eyebrow">03 / THỰC ĐƠN</p><h2>Thực đơn cho buổi tiệc</h2></div>
-      <div><p>{content.menuIntro}</p>
-        {menus.length > 0 && menus.map(menu => <article class="menu"><h3>{menu.title}</h3><ul>{(menu.dishes ?? []).map(dish => <li>{dish}</li>)}</ul></article>)}
-        <a class="text-link" href="#lien-he">Trao đổi về thực đơn <span aria-hidden="true">↗</span></a>
+    {menus.length > 0 && <section class="section shell split" id="thuc-don">
+      <div><p class="eyebrow">Thực đơn</p><h2>Thực đơn cho buổi tiệc</h2><p>{content.menuIntro}</p></div>
+      <div>{menus.map(menu => <article class="menu"><h3>{menu.title}</h3>{menu.url && <img class="editorial-image" src={menu.url} alt={menu.alt} width="800" height="600" loading="lazy" decoding="async" />}<ul>{menu.dishes.map(dish => <li>{dish}</li>)}</ul></article>)}</div>
+    </section>}
+    <section class="section shell" id="thu-vien">
+      <p class="eyebrow">03 / Thư viện</p><h2>Hình ảnh buổi tiệc</h2>
+      {gallery.length ? <>
+        {categories.length > 1 && <div class="filters" hidden role="group" aria-label="Lọc thư viện"><button type="button" data-filter="" aria-pressed="true">Tất cả</button>{categories.map(category => <button type="button" data-filter={category} aria-pressed="false">{category}</button>)}</div>}
+        <div class="gallery">{gallery.map(entry => <figure data-category={entry.category}>
+          <a href={entry.url} data-lightbox data-caption={entry.title} aria-label={`Xem ảnh: ${entry.title}`}><img src={entry.url} alt={entry.alt} width="800" height="1000" loading="lazy" decoding="async" /></a><figcaption>{entry.title}<small>{entry.category}</small></figcaption>
+        </figure>)}</div>
+        <dialog aria-label="Ảnh thư viện" id="lightbox"><div class="viewer"><button type="button" data-close autofocus>Đóng <span aria-hidden="true">×</span></button><img alt="" /><p data-caption-live aria-live="polite"></p><div class="viewer-controls"><button type="button" data-prev>← Ảnh trước</button><button type="button" data-next>Ảnh sau →</button></div></div></dialog>
+      </> : <div class="gallery-empty"><p>Ảnh các buổi tiệc sẽ được cập nhật tại đây.</p></div>}
+    </section>
+    {testimonials.length > 0 && <section class="section shell"><p class="eyebrow">Đánh giá</p><h2>Lời chia sẻ của khách hàng</h2>{testimonials.map(item => <figure><blockquote>{item.quote}</blockquote><figcaption>{item.name}</figcaption></figure>)}</section>}
+    {faq.length > 0 && <div class="tinted"><section class="section shell split" id="faq">
+      <div><p class="eyebrow">04 / Hỏi đáp</p><h2>Câu hỏi thường gặp</h2></div>
+      <div>{faq.map(item => <details><summary>{item.question}</summary><p>{item.answer}</p></details>)}</div>
+    </section></div>}
+    <div class="contact-band"><section class="section shell split" id="lien-he">
+      <div><p class="eyebrow">05 / Liên hệ</p><h2>Cùng lên kế hoạch cho buổi tiệc</h2></div>
+      <div><p>Hãy cho Thảo Hoàng biết ngày dự kiến, địa điểm và số lượng khách.</p>
+        {settings.address && <address>{settings.address}</address>}
+        {settings.serviceArea && <p>Khu vực phục vụ · {settings.serviceArea}</p>}
+        <div class="actions"><a class="button solid" href={`tel:${mainPhone}`}>Gọi {mainPhone}</a>
+        {zalo && <a class="button outline" href={`https://zalo.me/${zalo}`}>Zalo</a>}
+        {facebook && <a class="text-link" href={facebook}>Facebook ↗</a>}
+        {messenger && <a class="text-link" href={messenger}>Messenger ↗</a>}</div>
+        {secondary && <p>Số phụ <a class="text-link" href={`tel:${secondary}`}>{secondary}</a></p>}
+        {map && <a class="text-link" href={map}>Xem Google Maps ↗</a>}
       </div>
-    </section>
-    <div class="tinted">
-      <section class="section shell" id="thu-vien">
-        <p class="eyebrow">04 / THƯ VIỆN</p><h2>Hình ảnh buổi tiệc</h2>
-        {gallery.length ? <div class="gallery">{gallery.map(entry => <figure><a href={entry.url}><img src={entry.url} alt={entry.alt} width="800" height="1000" loading="lazy" decoding="async" /></a><figcaption>{entry.title}</figcaption></figure>)}</div> : <p class="empty">Thư viện sẽ được cập nhật với hình ảnh các buổi tiệc của Thảo Hoàng.</p>}
-      </section>
-    </div>
-    <section class="section shell intro" id="faq">
-      <div><p class="eyebrow">05 / HỎI ĐÁP</p><h2>Câu hỏi thường gặp</h2></div>
-      <div>{(content.faq ?? []).map(item => <details><summary>{item.question}</summary><p>{item.answer}</p></details>)}</div>
-    </section>
-    <div class="contact-band">
-      <section class="section shell intro" id="lien-he">
-        <div><p class="eyebrow">06 / LIÊN HỆ</p><h2>Cùng lên kế hoạch cho buổi tiệc</h2></div>
-        <div><p>Hãy cho Thảo Hoàng biết ngày dự kiến, địa điểm và số lượng khách.</p>
-          {settings.address && <p>{settings.address}</p>}
-          <div class="actions">
-            <a class="button solid" href={`tel:${mainPhone}`}>Gọi {mainPhone}</a>
-            {zalo && <a class="button outline" href={`https://zalo.me/${zalo}`}>Zalo</a>}
-            {messenger && <a class="button outline" href={messenger}>Messenger</a>}
-          </div>
-          {secondary && <p>Số phụ <a class="text-link" href={`tel:${secondary}`}>{secondary}</a></p>}
-          {map && <a class="text-link" href={map}>Xem bản đồ ↗</a>}
-        </div>
-      </section>
-    </div>
+    </section></div>
   </main>
-  <footer class="shell"><span>{settings.shortName} · {settings.slogan}</span><a href="#dau-trang">Về đầu trang ↑</a></footer>
+  <footer class="shell"><span><strong>{settings.shortName}</strong><br />{settings.slogan}</span><a href="#dau-trang">Về đầu trang ↑</a></footer>
+  <aside class="floating" aria-label="Liên hệ nhanh"><a href={`tel:${mainPhone}`}>Gọi ngay</a>{zalo && <a href={`https://zalo.me/${zalo}`}>Zalo</a>}</aside>
+  <script>
+    import '../site-interactions';
+  </script>
 </body>
 </html>
-
-
-

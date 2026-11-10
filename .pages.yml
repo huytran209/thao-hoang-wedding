@@ -5,7 +5,7 @@ media:
   rename: random
 content:
   - name: settings
-    label: Thông tin liên hệ
+    label: Thương hiệu và liên hệ
     type: file
     path: src/data/settings.json
     format: json
@@ -18,6 +18,8 @@ content:
       - {name: zaloPhone, label: Số Zalo, type: string}
       - {name: logo, label: Logo gốc, type: image}
       - {name: messengerUrl, label: Liên kết Messenger, type: string}
+      - {name: facebookUrl, label: Liên kết Facebook, type: string}
+      - {name: serviceArea, label: Khu vực phục vụ, type: string}
       - {name: address, label: Địa chỉ, type: string}
       - {name: mapUrl, label: Liên kết Google Maps, type: string}
   - name: hero
@@ -43,6 +45,7 @@ content:
       - {name: title, label: Tên ảnh, type: string, required: true}
       - {name: image, label: Ảnh, type: image, required: true}
       - {name: alt, label: Mô tả ảnh, type: string, required: true}
+      - {name: category, label: Phân loại, type: string}
       - {name: visible, label: Hiển thị trên website, type: boolean, default: false}
       - {name: order, label: Thứ tự, type: number, default: 0}
 
@@ -55,6 +58,8 @@ content:
     fields:
       - {name: introTitle, label: Tiêu đề giới thiệu, type: string, required: true}
       - {name: intro, label: Nội dung giới thiệu, type: text, required: true}
+      - {name: introImage, label: Ảnh giới thiệu, type: image}
+      - {name: introAlt, label: Mô tả ảnh giới thiệu, type: string}
       - name: services
         label: Dịch vụ
         type: object
@@ -62,6 +67,10 @@ content:
         fields:
           - {name: title, label: Tên dịch vụ, type: string, required: true}
           - {name: description, label: Mô tả, type: text, required: true}
+          - {name: image, label: Ảnh dịch vụ, type: image}
+          - {name: alt, label: Mô tả ảnh, type: string}
+          - {name: order, label: Thứ tự, type: number, default: 0}
+          - {name: visible, label: Hiển thị, type: boolean, default: true}
       - {name: menuIntro, label: Giới thiệu thực đơn, type: text, required: true}
       - name: menus
         label: Các thực đơn
@@ -70,6 +79,19 @@ content:
         fields:
           - {name: title, label: Tên thực đơn, type: string, required: true}
           - {name: dishes, label: Các món ăn, type: string, list: true}
+          - {name: image, label: Ảnh nhóm món, type: image}
+          - {name: alt, label: Mô tả ảnh, type: string}
+          - {name: order, label: Thứ tự, type: number, default: 0}
+          - {name: visible, label: Hiển thị, type: boolean, default: true}
+      - {name: testimonialsEnabled, label: Hiển thị đánh giá đã xác minh, type: boolean, default: false}
+      - name: testimonials
+        label: Đánh giá thật đã được phép đăng
+        type: object
+        list: true
+        fields:
+          - {name: name, label: Tên hiển thị, type: string, required: true}
+          - {name: quote, label: Nội dung, type: text, required: true}
+          - {name: visible, label: Đã xác minh và được phép hiển thị, type: boolean, default: false}
       - name: faq
         label: Câu hỏi thường gặp
         type: object
@@ -78,3 +100,12 @@ content:
           - {name: question, label: Câu hỏi, type: string, required: true}
           - {name: answer, label: Trả lời, type: text, required: true}
 
+  - name: seo
+    label: SEO và ảnh chia sẻ
+    type: file
+    path: src/data/seo.json
+    format: json
+    fields:
+      - {name: title, label: Tiêu đề tìm kiếm, type: string, required: true}
+      - {name: description, label: Mô tả tìm kiếm, type: text, required: true}
+      - {name: image, label: Ảnh chia sẻ, type: image}

@@ -1,34 +1,70 @@
 {
   "introTitle": "Một buổi tiệc mang dấu ấn riêng",
   "intro": "Thảo Hoàng đồng hành cùng gia đình trong việc lên ý tưởng cho buổi tiệc, từ thực đơn đến cách bài trí không gian.",
+  "introImage": "",
+  "introAlt": "",
   "services": [
     {
       "title": "Tiệc cưới",
-      "description": "Trao đổi về cách tổ chức, bố trí bàn tiệc và chuẩn bị thực đơn cho ngày cưới."
+      "description": "Cùng gia đình lên phương án bố trí không gian và bàn tiệc cho ngày cưới.",
+      "order": 10,
+      "visible": true
+    },
+    {
+      "title": "Đám hỏi",
+      "description": "Chuẩn bị không gian đón khách và bàn tiệc cho buổi gặp mặt hai gia đình.",
+      "order": 20,
+      "visible": true
     },
     {
       "title": "Tiệc tại nhà",
-      "description": "Chuẩn bị phương án phù hợp với không gian và số lượng khách của gia đình."
+      "description": "Sắp xếp bàn tiệc theo diện tích và số lượng khách của gia đình.",
+      "order": 30,
+      "visible": true
     },
     {
-      "title": "Lễ đính hôn",
-      "description": "Trao đổi về cách bài trí cho buổi lễ và phần tiệc dành cho hai gia đình."
+      "title": "Sinh nhật",
+      "description": "Trao đổi về chủ đề trang trí và thực đơn cho buổi sinh nhật.",
+      "order": 40,
+      "visible": true
     },
     {
-      "title": "Trang trí tiệc",
-      "description": "Thảo luận về phong cách, màu sắc, sân khấu và bàn tiệc phù hợp với không gian."
+      "title": "Thôi nôi / đầy tháng",
+      "description": "Lên phương án bài trí và phục vụ tiệc mừng cùng gia đình.",
+      "order": 50,
+      "visible": true
+    },
+    {
+      "title": "Liên hoan / sự kiện",
+      "description": "Sắp xếp khu vực đón khách và bàn tiệc theo tính chất buổi gặp mặt.",
+      "order": 60,
+      "visible": true
+    },
+    {
+      "title": "Trang trí sân khấu",
+      "description": "Chọn màu sắc và cách bài trí sân khấu phù hợp với buổi tiệc.",
+      "order": 70,
+      "visible": true
+    },
+    {
+      "title": "Trang trí bàn ghế và không gian tiệc",
+      "description": "Phối bàn ghế, khăn bàn và chi tiết trang trí theo không gian tổ chức.",
+      "order": 80,
+      "visible": true
     }
   ],
-  "menuIntro": "Trao đổi với Thảo Hoàng để chọn thực đơn phù hợp với số lượng khách và khẩu vị của gia đình.",
+  "menuIntro": "Chọn món theo khẩu vị và số lượng khách của gia đình.",
   "menus": [],
+  "testimonialsEnabled": false,
+  "testimonials": [],
   "faq": [
     {
       "question": "Cần chuẩn bị gì khi liên hệ?",
       "answer": "Gia đình có thể gửi ngày dự kiến, địa điểm, số lượng khách và loại tiệc để bắt đầu trao đổi."
     },
     {
-      "question": "Xem thực đơn ở đâu?",
-      "answer": "Xem mục Thực đơn hoặc liên hệ trực tiếp để trao đổi về các món phù hợp."
+      "question": "Thảo Hoàng phục vụ khu vực nào?",
+      "answer": "Lộc Ninh và các khu vực lân cận. Bạn có thể gửi địa điểm dự kiến để trao đổi thêm."
     },
     {
       "question": "Có thể trao đổi về cách bố trí tại nhà không?",
