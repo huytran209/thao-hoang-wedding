@@ -1,7 +1,7 @@
 const mobile = document.querySelector<HTMLDetailsElement>('.mobile-nav');
 mobile?.querySelectorAll('a').forEach(link => link.addEventListener('click', () => { mobile.open = false; }));
 
-for (const image of document.querySelectorAll('main img, header img')) {
+for (const image of document.querySelectorAll<HTMLImageElement>('main img, header img')) {
   const hide = () => { image.hidden = true; };
   image.addEventListener('error', hide);
   if (image.complete && !image.naturalWidth) hide();
