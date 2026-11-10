@@ -1,0 +1,80 @@
+media:
+  input: public/images
+  output: /images
+  extensions: [jpg, jpeg, png, webp]
+  rename: random
+content:
+  - name: settings
+    label: Thông tin liên hệ
+    type: file
+    path: src/data/settings.json
+    format: json
+    fields:
+      - {name: brandName, label: Tên doanh nghiệp, type: string, required: true}
+      - {name: shortName, label: Tên ngắn, type: string, required: true}
+      - {name: slogan, label: Slogan, type: string, required: true}
+      - {name: primaryPhone, label: Điện thoại chính, type: string, required: true}
+      - {name: secondaryPhone, label: Điện thoại phụ, type: string}
+      - {name: zaloPhone, label: Số Zalo, type: string}
+      - {name: logo, label: Logo gốc, type: image}
+      - {name: messengerUrl, label: Liên kết Messenger, type: string}
+      - {name: address, label: Địa chỉ, type: string}
+      - {name: mapUrl, label: Liên kết Google Maps, type: string}
+  - name: hero
+    label: Ảnh đầu trang
+    type: file
+    path: src/data/hero.json
+    format: json
+    fields:
+      - {name: heading, label: Tiêu đề, type: string, required: true}
+      - {name: desktopImage, label: Ảnh máy tính, type: image}
+      - {name: mobileImage, label: Ảnh điện thoại, type: image}
+      - {name: imageAlt, label: Mô tả ảnh, type: string}
+      - {name: focalPoint, label: Điểm lấy nét (ví dụ 50% 50%), type: string}
+  - name: gallery
+    label: Thư viện ảnh
+    type: collection
+    path: src/data/gallery
+    format: json
+    filename: '{primary}.json'
+    exclude: [.gitkeep]
+    view: {primary: title}
+    fields:
+      - {name: title, label: Tên ảnh, type: string, required: true}
+      - {name: image, label: Ảnh, type: image, required: true}
+      - {name: alt, label: Mô tả ảnh, type: string, required: true}
+      - {name: visible, label: Hiển thị trên website, type: boolean, default: false}
+      - {name: order, label: Thứ tự, type: number, default: 0}
+
+
+  - name: content
+    label: Giới thiệu, dịch vụ, thực đơn và hỏi đáp
+    type: file
+    path: src/data/content.json
+    format: json
+    fields:
+      - {name: introTitle, label: Tiêu đề giới thiệu, type: string, required: true}
+      - {name: intro, label: Nội dung giới thiệu, type: text, required: true}
+      - name: services
+        label: Dịch vụ
+        type: object
+        list: true
+        fields:
+          - {name: title, label: Tên dịch vụ, type: string, required: true}
+          - {name: description, label: Mô tả, type: text, required: true}
+      - {name: menuIntro, label: Giới thiệu thực đơn, type: text, required: true}
+      - name: menus
+        label: Các thực đơn
+        type: object
+        list: true
+        fields:
+          - {name: title, label: Tên thực đơn, type: string, required: true}
+          - {name: dishes, label: Các món ăn, type: string, list: true}
+      - name: faq
+        label: Câu hỏi thường gặp
+        type: object
+        list: true
+        fields:
+          - {name: question, label: Câu hỏi, type: string, required: true}
+          - {name: answer, label: Trả lời, type: text, required: true}
+

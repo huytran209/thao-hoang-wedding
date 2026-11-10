@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+.npm-cache/
+package/
+npm-tool.tgz
