@@ -17,10 +17,10 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Install Astro type-check tools
-        run: npm install --no-save --package-lock=false @astrojs/check@0.9.6 typescript@5.9.3
-      - run: npm exec -- astro check
       - run: npm run build
+      - name: Install Astro type-check tools
+        run: npm install --no-save --package-lock=false @astrojs/check@0.9.6 typescript@5.9.3 @types/node@24
+      - run: npm exec -- astro check
       - uses: actions/upload-artifact@v4
         with:
           name: website-preview
