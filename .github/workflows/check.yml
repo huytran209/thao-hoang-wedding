@@ -1,4 +1,4 @@
-name: Ki?m tra website
+name: Website checks
 on:
   push:
     branches: [development]
@@ -22,9 +22,15 @@ jobs:
         run: npm install --no-save --package-lock=false @astrojs/check@0.9.6 typescript@5.9.3 @types/node@24 playwright@1.56.1
       - run: npm exec -- astro check
       - run: npm exec -- playwright install --with-deps chromium
+      - run: node scripts/package-offline-preview.mjs
       - run: node scripts/verify-preview.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: website-preview
           path: dist
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: thao-hoang-mo-bang-trinh-duyet
+          path: thao-hoang-preview.html
           if-no-files-found: error

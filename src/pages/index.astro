@@ -1,8 +1,8 @@
 ---
-import settings from '../data/settings.json';
-import hero from '../data/hero.json';
+import rawSettings from '../data/settings.json';
+import rawHero from '../data/hero.json';
 import rawContent from '../data/content.json';
-import seo from '../data/seo.json';
+import rawSeo from '../data/seo.json';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import '../site.css';
@@ -17,6 +17,16 @@ type Content = {
   faq?: { question: string; answer: string }[];
   testimonialsEnabled?: boolean; testimonials?: { name: string; quote: string; visible?: boolean }[];
 };
+type Settings = {
+  brandName: string; shortName: string; slogan: string; primaryPhone: string;
+  secondaryPhone?: string; zaloPhone?: string; logo?: string; messengerUrl?: string;
+  facebookUrl?: string; mapUrl?: string; address?: string; serviceArea?: string;
+};
+type Hero = { heading: string; desktopImage?: string; mobileImage?: string; imageAlt?: string; focalPoint?: string };
+type Seo = { title: string; description: string; image?: string };
+const settings: Settings = rawSettings;
+const hero: Hero = rawHero;
+const seo: Seo = rawSeo;
 const content: Content = rawContent;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 function image(path?: string) {
@@ -57,7 +67,7 @@ const facebook = external(settings.facebookUrl, ['www.facebook.com','facebook.co
 const messenger = external(settings.messengerUrl, ['m.me','www.messenger.com','messenger.com']);
 const map = external(settings.mapUrl, ['maps.app.goo.gl','maps.google.com','www.google.com']);
 if (!mainPhone) throw new Error('Cần số điện thoại chính hợp lệ');
-const focal = /^(?:100|\d{1,2})% (?:100|\d{1,2})%$/.test(hero.focalPoint) ? hero.focalPoint : '50% 50%';
+const focal = /^(?:100|\d{1,2})% (?:100|\d{1,2})%$/.test(hero.focalPoint ?? '') ? hero.focalPoint : '50% 50%';
 const services = ordered(content.services).filter(item => item.title?.trim() && item.description?.trim()).map(item => ({...item, url: photo(item.image, item.alt)}));
 const menus = ordered(content.menus).map(item => ({ ...item, url: photo(item.image, item.alt), dishes: (item.dishes ?? []).filter(dish => dish.trim()) })).filter(item => item.title?.trim() && item.dishes.length);
 const gallery = ordered(Object.values(import.meta.glob<Gallery>('../data/gallery/*.json', { eager: true, import: 'default' })), false)
@@ -169,3 +179,4 @@ const shareImage = image(seo.image) || desktop || mobile;
   </script>
 </body>
 </html>
+

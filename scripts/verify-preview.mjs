@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, mkdtempSync, mkdirSync, cpSync, rmSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { execFileSync, spawn } from 'node:child_process';
 import { chromium } from 'playwright';
@@ -41,6 +42,17 @@ try {
   }
   browser = await chromium.launch();
   const page = await browser.newPage({ reducedMotion:'reduce' });
+  await page.goto(pathToFileURL(resolve('thao-hoang-preview.html')).href);
+  const configured = JSON.parse(readFileSync('src/data/settings.json','utf8'));
+  if (configured.logo) {
+    assert(await page.locator('.brand img').evaluate(img => img.complete && img.naturalWidth > 0 && img.src.startsWith('data:image/')));
+  }
+  assert.equal(await page.locator('body').evaluate(node => getComputedStyle(node).marginTop),'0px');
+  await page.setViewportSize({width:390,height:900});
+  await page.getByText('Danh mục',{exact:true}).click();
+  await page.getByRole('navigation',{name:'Điều hướng điện thoại'}).getByRole('link',{name:'Dịch vụ'}).click();
+  await page.waitForFunction(() => !document.querySelector('.mobile-nav')?.open);
+  console.log('Standalone file preview PASS');
   await page.route('https://fonts.googleapis.com/**', route=>route.abort());
   for (const width of [360,390,768,1024,1440]) {
     await page.setViewportSize({ width,height:900 });
@@ -87,3 +99,4 @@ try {
   if (server) { server.kill(); await new Promise(resolve=>server.once('exit',resolve)); }
   rmSync(root,{recursive:true,force:true});
 }
+
